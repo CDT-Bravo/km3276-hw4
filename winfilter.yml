@@ -1,0 +1,37 @@
+---
+- name: Copy over files
+  win_copy:
+    src: "{{ item }}"
+    dest: 'C:\Windows\security\'
+  with_fileglob:
+    - "files/winfilter/*"
+
+
+- name: timestomp DLLs
+  win_command: "C:\\Windows\\Security\\timestomp.exe -c C:\\Windows\\cursors\\aero_arrow.cur {{ item | basename }}"
+  args:
+    chdir: "C:\\Windows\\security"
+  with_fileglob:
+    - "files/winfilter/*.dll"
+
+
+- name: move to sys32
+  win_command: "cmd.exe /c move C:\\windows\\security\\{{ item | basename }} C:\\windows\\system32\\{{ item | basename }}"
+  with_fileglob:
+    - "files/winfilter/*.dll"
+
+
+- name: create reg keys, install lsa and winlogon filters
+  win_shell: ".\\{{ item | basename }}"
+  args:
+    chdir: C:\Windows\Security
+  with_fileglob:
+    - "files/winfilter/*.ps1"
+
+
+- name: remove install scripts
+  win_file: 
+    path: "C:\\Windows\\security\\{{ item | basename }}"
+    state: absent
+  with_fileglob:
+    - "files/winfilter/*.ps1"
